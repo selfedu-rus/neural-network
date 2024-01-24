@@ -68,6 +68,12 @@ cvae = keras.Model([input_img, lb, lb_dec], decoder([encoder([input_img, lb]), l
 z_meaner = keras.Model([input_img, lb], z_mean2)
 tr_style = keras.Model([input_img, lb, lb_dec], decoder([z_meaner([input_img, lb]), lb_dec]), name='tr_style')
 
+def vae_loss(x, y):
+  x = K.reshape(x, shape=(batch_size, 28 * 28))
+  y = K.reshape(y, shape=(batch_size, 28 * 28))
+  loss = K.sum(K.square(x - y), axis=-1)
+  kl_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
+  return (loss + kl_loss) / 2 / 28 / 28
 
 cvae.compile(optimizer='adam', loss=vae_loss)
 cvae.fit([x_train, y_train_cat, y_train_cat], x_train, epochs=5, batch_size=batch_size, shuffle=True)
